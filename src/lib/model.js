@@ -37,7 +37,8 @@ if (!process.env.GROQ_API_KEY) {
 
 export const model = new ChatGroq({
     apiKey: process.env.GROQ_API_KEY,
-    model: "openai/gpt-oss-120b",
+    // model: "openai/gpt-oss-120b",
+    model: "llama-3.3-70b-versatile",
     temperature: 0.7,
     maxTokens: 2048,
 })

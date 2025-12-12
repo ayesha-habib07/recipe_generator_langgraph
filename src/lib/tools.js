@@ -69,7 +69,6 @@ export const validate_allergies = tool(
         })
     }
 );
-
 export const validate_favorite_vs_allergy = tool(
     async (input) => {
         const parsed = z.object({
@@ -141,8 +140,6 @@ export const validate_type = tool(
         })
     }
 );
-
-
 export const toolsByName = {
     validate_favorites,
     validate_allergies,
