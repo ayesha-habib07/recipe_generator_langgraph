@@ -37,17 +37,19 @@ export async function validate_favoritesNode(state) {
         `.trim();
 
         const aiRes = await model.invoke(prompt);
-
+        let content = aiRes.content
+            .replace(/```json/g, "")
+            .replace(/```/g, "")
+            .trim();
         let NON_VEG_ITEMS = [];
 
         try {
-            const json = JSON.parse(aiRes.content);
+            const json = JSON.parse(content);
             NON_VEG_ITEMS = json.NON_VEG_ITEMS || [];
         } catch (err) {
             console.log("❌  Failed to parse JSON from model:", aiRes);
             NON_VEG_ITEMS = [];
         }
-
 
         const invalidFavorites = normalizedIngredients.filter(fav =>
             NON_VEG_ITEMS.includes(fav)
@@ -62,22 +64,25 @@ export async function validate_favoritesNode(state) {
                 replacements.push({ item, suggestions });
             }
 
-            // return {
+            return new Command({
+                update: {
+                    conflictDetails: {
+                        key: "non_veg_favorites_conflict",
+                        message: "You selected 'Vegetarian' but some favorites contain non-veg items.",
+                        conflicts: invalidFavorites,
+                        replacements
+                    }
+                }
+
+            });
+            // return interrupt({
             //     conflictDetails: {
             //         key: "non_veg_favorites_conflict",
             //         message: "You selected 'Vegetarian' but some favorites contain non-veg items.",
             //         conflicts: invalidFavorites,
             //         replacements
             //     }
-            // };
-            return interrupt({
-                conflictDetails: {
-                    key: "non_veg_favorites_conflict",
-                    message: "You selected 'Vegetarian' but some favorites contain non-veg items.",
-                    conflicts: invalidFavorites,
-                    replacements
-                }
-            })
+            // })
         }
     }
 
@@ -147,23 +152,23 @@ export async function checkConflictNode(state) {
     if (!result.valid) {
         console.log("-----------------------⚠️ Conflicts found------------------", result.conflicts);
         console.log("---------------------------throwing interrupt for conflict-------------------");
-        // return new Command({
-        //     update: {
-        //         conflictDetails: {
-        //             message: "Some favorite ingredients conflict with allergies",
-        //             conflicts: result.conflicts,
-        //             key: "favorite_vs_allergy_conflict",
-        //         }
-        //     },
-        //     goto: Command.END   // same as interrupt(Command)
-        // });
-        return interrupt({
-            conflictDetails: {
-                key: "favorite_vs_allergy_conflict",
-                message: "Some favorite ingredients conflict with allergies",
-                conflicts: result.conflicts,
-            }
-        })
+        return new Command({
+            update: {
+                conflictDetails: {
+                    message: "Some favorite ingredients conflict with allergies",
+                    conflicts: result.conflicts,
+                    key: "favorite_vs_allergy_conflict",
+                }
+            },
+            goto: Command.END 
+        });
+        // return interrupt({
+        //     conflictDetails: {
+        //         key: "favorite_vs_allergy_conflict",
+        //         message: "Some favorite ingredients conflict with allergies",
+        //         conflicts: result.conflicts,
+        //     }
+        // })
     };
     console.log("------------------------✅ No conflicts found------------------------");
     return {};
@@ -271,25 +276,28 @@ export async function validateAllergiesInRecipeNode(state, config) {
                 const suggestions = await getSuggestions(allergy);
                 console.log("✅ LLM suggestions", suggestions);
                 console.log("🚨 THROWING INTERRUPT FOR ALLERGY");
-                // return {
+                return new Command({
+                    update: {
+                        currentAllergy: allergy,
+                        conflictDetails: {
+                            key: "allergy_conflict",
+                            allergy: allergy,
+                            conflictingFavorite: fav,
+                            suggestions: suggestions,
+                        }
+                    }
+                });
+
+                // return interrupt({
                 //     currentAllergy: allergy,
                 //     conflictDetails: {
                 //         key: "allergy_conflict",
-                //         allergy: allergy,
+                //         allergy,
                 //         conflictingFavorite: fav,
-                //         suggestions: suggestions,
+                //         suggestions,
                 //     }
-                // }
-                return interrupt({
-                    currentAllergy: allergy,
-                    conflictDetails: {
-                        key: "allergy_conflict",
-                        allergy,
-                        conflictingFavorite: fav,
-                        suggestions,
-                    }
 
-                })
+                // })
             }
 
         }
@@ -367,23 +375,26 @@ export async function allergyInfoNode(state, config) {
         }
         console.log("-----------------✅ Generated alternatives for all allergies:---------------------", allergyAlternatives);
 
-        // return {
+        return new Command({
+            update: {
+                conflictDetails: {
+                    key: "allergy_info",
+                    message: "Here are safe alternatives for your allergies:",
+                    allergyAlternatives: allergyAlternatives,
+                },
+                allergyInfoAcknowledged: false,
+            }
+        });
+
+
+        // return interrupt({
         //     conflictDetails: {
         //         key: "allergy_info",
         //         message: "Here are safe alternatives for your allergies:",
-        //         allergyAlternatives: allergyAlternatives,
+        //         allergyAlternatives: allergyAlternatives
         //     },
         //     allergyInfoAcknowledged: false,
-        // };
-
-        return interrupt({
-            conflictDetails: {
-                key: "allergy_info",
-                message: "Here are safe alternatives for your allergies:",
-                allergyAlternatives: allergyAlternatives
-            },
-            allergyInfoAcknowledged: false,
-        })
+        // })
     }
     console.log("✅ No allergies to show alternatives for");
     return {};
@@ -475,32 +486,34 @@ export async function postValidationOfRecipeNode(state) {
     if (!allergyResult.valid) {
         console.log("--------------❌ Allergy validation failed:---------------", allergyResult.found);
 
-        // return {
+        return new Command({
+            update: {
+                recipe: { ...recipe, ingredients: normalizedIngredients },
+                validationErrors: [
+                    {
+                        type: "allergy",
+                        found: allergyResult.found,
+                        message: "Recipe contains allergic ingredients: " + allergyResult.found.join(", "),
+                    },
+                ],
+            }
+        });
+        // return interrupt({
         //     recipe: { ...recipe, ingredients: normalizedIngredients },
+        //     conflictDetails: {
+        //         key: "post_recipe_allergy",
+        //         message: "The generated recipe contains allergic ingredients: " + allergyResult.found.join(", "),
+        //         found: allergyResult.found
+        //     },
         //     validationErrors: [
         //         {
         //             type: "allergy",
         //             found: allergyResult.found,
         //             message: "Recipe contains allergic ingredients: " + allergyResult.found.join(", "),
-        //         },
-        //     ],
-        // };
-        return interrupt({
-            recipe: { ...recipe, ingredients: normalizedIngredients },
-            conflictDetails: {
-                key: "post_recipe_allergy",
-                message: "The generated recipe contains allergic ingredients: " + allergyResult.found.join(", "),
-                found: allergyResult.found
-            },
-            validationErrors: [
-                {
-                    type: "allergy",
-                    found: allergyResult.found,
-                    message: "Recipe contains allergic ingredients: " + allergyResult.found.join(", "),
-                }
-            ]
+        //         }
+        //     ]
 
-        })
+        // })
     }
 
     console.log("--------------------✅ Recipe validation passed---------------------");

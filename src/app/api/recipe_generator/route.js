@@ -14,7 +14,7 @@ export async function POST(req) {
     try {
         const body = await req.json();
         console.log("----------------📥 Recipe Generator Input----------------", body);
-        
+
         const parsed = InputSchema.parse(body);
         const threadId = parsed.threadId || crypto.randomUUID();
 
@@ -27,7 +27,7 @@ export async function POST(req) {
                 allergies: parsed.allergies,
                 recipeType: parsed.recipeType,
                 threadId,
-            },  
+            },
             {
                 configurable: { thread_id: threadId },
             }
@@ -77,7 +77,7 @@ export async function POST(req) {
 
     } catch (err) {
         console.error("❌ Error in recipe-generator route:", err);
-        
+
         if (err instanceof z.ZodError) {
             return NextResponse.json(
                 { status: "error", error: "Invalid input", details: err.errors },

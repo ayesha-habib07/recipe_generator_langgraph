@@ -11,7 +11,7 @@ import {
 
 export function buildGraph() {
     const graph = new StateGraph(recipeState)
-        
+
         .addNode("validate_favoritesNode", validate_favoritesNode)
         .addNode("checkConflictNode", checkConflictNode)
         .addNode("allergyInfoNode", allergyInfoNode)
@@ -71,20 +71,20 @@ export function buildGraph() {
                 return "generateRecipeNode";
             }
         )
+        .addEdge("generateRecipeNode", "postValidationOfRecipeNode")
 
         .addConditionalEdges(
             "postValidationOfRecipeNode",
             (state) => {
-                if(state.conflictDetails?.key === "post_recipe_allergy"){
+                if (state.conflictDetails?.key === "post_recipe_allergy") {
                     console.log("🛑 Interrupt: Final recipe contains allergy");
                     return END;
                 }
                 return END;           // normal completion
-            } 
+            }
         )
 
-        // .addEdge("generateRecipeNode", "postValidationOfRecipeNode")
-        // .addEdge("postValidationOfRecipeNode", END);
+    // .addEdge("postValidationOfRecipeNode", END);
 
     const checkpointer = new MemorySaver();
 

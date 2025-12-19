@@ -1740,7 +1740,6 @@
 
 'use client'
 import { useState } from "react";
-import { resume } from "react-dom/server";
 
 export default function RecipePage() {
   const [form, setForm] = useState({
@@ -1961,9 +1960,6 @@ export default function RecipePage() {
     }, 100);
   }
   const totalVegReplacements = Object.values(selectedVegReplacements).flat().length;
-
-
-
   // Handle allergy alternative selection
   const handleAlternativeToggle = (allergy, alternative) => {
     setSelectedAlternatives(prev => {
@@ -2408,9 +2404,6 @@ export default function RecipePage() {
                       : '🔄 Replace (Select items)'}
                   </button>
                 </div>
-
-
-
                 <p className="text-xs text-gray-600 mt-3 text-center">
                   💡 Choose vegetarian alternatives or remove non-veg items entirely
                 </p>
@@ -2441,7 +2434,7 @@ export default function RecipePage() {
 
                   {/* Regenerate button */}
                   <button
-                    onClick={() => handleResume("regenerate_without_allergens")}
+                    onClick={() => submitResume("regenerate_without_allergens")}
                     className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                   >
                     Regenerate Without Allergens
@@ -2449,7 +2442,7 @@ export default function RecipePage() {
 
                   {/* Continue anyway button */}
                   <button
-                    onClick={() => handleResume("accept_anyway")}
+                    onClick={() => submitResume("accept_anyway")}
                     className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
                   >
                     View Recipe Anyway
@@ -2542,38 +2535,6 @@ export default function RecipePage() {
             </div>
           )}
 
-          {/* Allergy Conflict (LLM Suggestions) */}
-          {/* {interruptData && interruptData.key === "allergy_conflict" && (
-            <div className="p-6 bg-purple-100 border-2 border-purple-300 rounded-lg shadow-md">
-              <h2 className="text-xl font-bold mb-2 text-purple-900">
-                ⚠️ Allergy Found — Select Replacement
-              </h2>
-
-              <p className="text-purple-700 mb-3">
-                Ingredient <strong className="text-purple-900">{interruptData.allergy}</strong> is not allowed.
-                Please select a safe replacement:
-              </p>
-
-              <select
-                className="w-full p-3 border-2 border-purple-300 rounded-md text-gray-700 mb-4 focus:ring-2 focus:ring-purple-500"
-                value={pendingSelection}
-                onChange={(e) => setPendingSelection(e.target.value)}
-              >
-                <option value="">-- Select replacement --</option>
-                {interruptData.suggestions?.map((s, i) => (
-                  <option key={i} value={s}>{s}</option>
-                ))}
-              </select>
-
-              <button
-                onClick={submitResume}
-                disabled={!pendingSelection || loading}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
-              >
-                {loading ? "⏳ Processing..." : "✅ Continue with Selection"}
-              </button>
-            </div>
-          )} */}
 
           {/* Error Display */}
           {error && (
